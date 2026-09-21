@@ -1,0 +1,112 @@
+! =============================================================================
+!  SW2 | Access switch, closet 2 | Cisco 2960-24TT in Packet Tracer
+! -----------------------------------------------------------------------------
+!  Port map: Fa0/1 PC-S2 (V10) · Fa0/7 PC-H2 (V20) · Fa0/13 PC-IT2 (V30)
+!            Fa0/19 AP-GUEST (V40) · Gi0/1 -> SW1 Gi0/2 · Gi0/2 unused
+!  How to use: type `enable` at Switch>, then paste ONE section at a time.
+!  STARTER CONFIG: in phase P5, replace this file with the real exported
+!  running-config.
+! =============================================================================
+
+! ------------------------------------------------------------------ [M1] core
+configure terminal
+hostname SW2
+no ip domain-lookup
+line con 0
+ logging synchronous
+vtp mode transparent
+!
+vlan 10
+ name SALES
+vlan 20
+ name HR
+vlan 30
+ name IT
+vlan 40
+ name GUEST
+!
+interface range FastEthernet0/1 - 6
+ description SALES access
+ switchport mode access
+ switchport access vlan 10
+interface range FastEthernet0/7 - 12
+ description HR access
+ switchport mode access
+ switchport access vlan 20
+interface range FastEthernet0/13 - 18
+ description IT access
+ switchport mode access
+ switchport access vlan 30
+interface range FastEthernet0/19 - 20
+ description GUEST AP uplink
+ switchport mode access
+ switchport access vlan 40
+!
+interface GigabitEthernet0/1
+ description TRUNK to SW1 Gi0/2
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40
+!
+interface Vlan1
+ shutdown
+interface Vlan30
+ description Management
+ ip address 192.168.10.132 255.255.255.192
+ no shutdown
+ip default-gateway 192.168.10.129
+end
+write memory
+
+! ------------------------------------------------------------------ [M2] port security
+configure terminal
+interface range FastEthernet0/1 - 18
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+interface range FastEthernet0/19 - 20
+ switchport port-security
+ switchport port-security maximum 10
+ switchport port-security violation restrict
+end
+! Generate traffic from every host (ipconfig /renew) BEFORE saving, so the sticky MACs are saved too.
+write memory
+
+! ------------------------------------------------------------------ [E1] hardening (after v1.0)
+configure terminal
+enable secret LAB-ONLY-change-me
+service password-encryption
+banner motd # Authorized access only - lab device #
+ip domain-name office.test
+username netadmin secret LAB-ONLY-change-me
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+access-list 10 permit 192.168.10.128 0.0.0.63
+line vty 0 15
+ login local
+ transport input ssh
+ access-class 10 in
+!
+vlan 998
+ name PARKING
+vlan 999
+ name NATIVE
+interface range FastEthernet0/21 - 24
+ description UNUSED - parked
+ switchport mode access
+ switchport access vlan 998
+ shutdown
+interface GigabitEthernet0/2
+ description UNUSED - parked
+ switchport mode access
+ switchport access vlan 998
+ shutdown
+interface range FastEthernet0/1 - 20
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+interface GigabitEthernet0/1
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,999
+ switchport nonegotiate
+end
+write memory
