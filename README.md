@@ -16,8 +16,9 @@
 
 ## Topology
 
-<!-- Export diagrams/topology.drawio to PNG, then uncomment: -->
-<!-- ![Topology](diagrams/topology.png) -->
+![Topology](diagrams/topology.png)
+
+Source: [`diagrams/topology.drawio`](diagrams/topology.drawio) (draw.io).
 
 ## IP plan
 
