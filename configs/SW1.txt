@@ -1,118 +1,221 @@
-! =============================================================================
-!  SW1 | Access switch, closet 1 | Cisco 2960-24TT in Packet Tracer
-! -----------------------------------------------------------------------------
-!  Port map: Fa0/1 PC-S1 (V10) · Fa0/7 PC-H1 (V20) · Fa0/13 SRV-CORE (V30)
-!            Fa0/14 PC-IT1 (V30) · Gi0/1 -> R1 G0/0 · Gi0/2 -> SW2 Gi0/1
-!  How to use: type `enable` at Switch>, then paste ONE section at a time.
-!  STARTER CONFIG: in phase P5, replace this file with the real exported
-!  running-config.
-! =============================================================================
-
-! ------------------------------------------------------------------ [M1] core
-configure terminal
+!
+version 15.0
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+no service password-encryption
+!
 hostname SW1
+!
+!
+!
 no ip domain-lookup
-line con 0
- logging synchronous
-! Transparent: VLANs are created on purpose on each switch, never learned from VTP.
+!
 vtp mode transparent
+!
+!
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
 !
 vlan 10
  name SALES
+!
 vlan 20
  name HR
+!
 vlan 30
  name IT
+!
 vlan 40
  name GUEST
 !
-! Same port blocks on every access switch
-interface range FastEthernet0/1 - 6
+interface FastEthernet0/1
  description SALES access
- switchport mode access
  switchport access vlan 10
-interface range FastEthernet0/7 - 12
- description HR access
  switchport mode access
- switchport access vlan 20
-interface range FastEthernet0/13 - 18
- description IT access
- switchport mode access
- switchport access vlan 30
-interface range FastEthernet0/19 - 20
- description GUEST AP uplink
- switchport mode access
- switchport access vlan 40
+ switchport port-security
+ switchport port-security mac-address sticky 
+ switchport port-security mac-address sticky 0009.7CB1.EA1A
 !
-! Explicit allowed list: fault F2 depends on it
+interface FastEthernet0/2
+ description SALES access
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/3
+ description SALES access
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/4
+ description SALES access
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/5
+ description SALES access
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/6
+ description SALES access
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/7
+ description HR access
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+ switchport port-security mac-address sticky 0002.1716.2A23
+!
+interface FastEthernet0/8
+ description HR access
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/9
+ description HR access
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/10
+ description HR access
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/11
+ description HR access
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/12
+ description HR access
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/13
+ description IT access
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+ switchport port-security mac-address sticky 0007.ECA1.3235
+!
+interface FastEthernet0/14
+ description IT access
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+ switchport port-security mac-address sticky 0050.0F8D.025A
+!
+interface FastEthernet0/15
+ description IT access
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/16
+ description IT access
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/17
+ description IT access
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/18
+ description IT access
+ switchport access vlan 30
+ switchport mode access
+ switchport port-security
+ switchport port-security mac-address sticky 
+!
+interface FastEthernet0/19
+ description GUEST AP uplink
+ switchport access vlan 40
+ switchport mode access
+ switchport port-security
+ switchport port-security maximum 10
+ switchport port-security violation restrict 
+!
+interface FastEthernet0/20
+ description GUEST AP uplink
+ switchport access vlan 40
+ switchport mode access
+ switchport port-security
+ switchport port-security maximum 10
+ switchport port-security violation restrict 
+!
+interface FastEthernet0/21
+!
+interface FastEthernet0/22
+!
+interface FastEthernet0/23
+!
+interface FastEthernet0/24
+!
 interface GigabitEthernet0/1
  description TRUNK to R1 G0/0
- switchport mode trunk
  switchport trunk allowed vlan 10,20,30,40
+ switchport mode trunk
+!
 interface GigabitEthernet0/2
  description TRUNK to SW2 Gi0/1
- switchport mode trunk
  switchport trunk allowed vlan 10,20,30,40
+ switchport mode trunk
 !
-! Management lives in the IT VLAN
 interface Vlan1
+ no ip address
  shutdown
+!
 interface Vlan30
  description Management
  ip address 192.168.10.131 255.255.255.192
- no shutdown
-ip default-gateway 192.168.10.129
-end
-write memory
-
-! ------------------------------------------------------------------ [M2] port security
-configure terminal
-! Wired users + server: one known device per port, remembered, port shuts on violation
-interface range FastEthernet0/1 - 18
- switchport port-security
- switchport port-security maximum 1
- switchport port-security mac-address sticky
- switchport port-security violation shutdown
-! AP uplink: every wireless client's MAC appears here, so allow many and don't sticky
-interface range FastEthernet0/19 - 20
- switchport port-security
- switchport port-security maximum 10
- switchport port-security violation restrict
-end
-! Generate traffic from every host (ipconfig /renew) BEFORE saving, so the sticky MACs are saved too.
-write memory
-
-! ------------------------------------------------------------------ [E1] hardening (after v1.0)
-! LAB-ONLY placeholders. Configure R1 [E1] first (native VLAN 999 on the router trunk).
-configure terminal
-enable secret LAB-ONLY-change-me
-service password-encryption
-banner motd # Authorized access only - lab device #
-ip domain-name office.test
-username netadmin secret LAB-ONLY-change-me
-crypto key generate rsa general-keys modulus 1024
-ip ssh version 2
-access-list 10 permit 192.168.10.128 0.0.0.63
-line vty 0 15
- login local
- transport input ssh
- access-class 10 in
 !
-vlan 998
- name PARKING
-vlan 999
- name NATIVE
-interface range FastEthernet0/21 - 24
- description UNUSED - parked
- switchport mode access
- switchport access vlan 998
- shutdown
-interface range FastEthernet0/1 - 20
- spanning-tree portfast
- spanning-tree bpduguard enable
-interface range GigabitEthernet0/1 - 2
- switchport trunk native vlan 999
- switchport trunk allowed vlan 10,20,30,40,999
- switchport nonegotiate
+ip default-gateway 192.168.10.129
+!
+!
+!
+!
+line con 0
+ logging synchronous
+!
+line vty 0 4
+ login
+line vty 5 15
+ login
+!
+!
+!
+!
 end
-write memory
+

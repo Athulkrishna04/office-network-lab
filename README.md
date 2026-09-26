@@ -2,7 +2,7 @@
 
 > Designed a 4-VLAN office network in Packet Tracer (inter-VLAN routing, DHCP, DNS, NAT, ACLs); injected and resolved 6 faults with documented root cause and fix.
 
-**Status:** in progress. See the [execution plan](docs/PLAN.md).
+**Status:** baseline v1.0 built and verified; fault write-ups in progress.
 **Packet Tracer version:** `9.0.1`. The `.pkt` files need Packet Tracer 9.0 or newer to open.
 
 ## What's in it
@@ -33,7 +33,13 @@ Full plan: [docs/ip-plan.md](docs/ip-plan.md). Validate it with `python tools/ip
 
 ## Verification
 
-<!-- After P5: e.g. "22/22 tests pass (5 negative tests correctly blocked)". Link tests/verification-matrix.md -->
+**22 of 22 tests pass**, including 5 negative tests where the traffic must be blocked (guest isolation). Full results, with the observed output for each test, are in [tests/verification-matrix.md](tests/verification-matrix.md).
+
+Highlights:
+- Every host leases from its own VLAN's pool; HR, Sales and Guest leases are relayed across the router to one central server.
+- `show ip nat translations` shows inside addresses translated to the single public address 203.0.113.2, and the ISP has no route back to 192.168.10.0/24.
+- Guests reach the internet but not Sales, HR or IT; blocked pings are refused by their own gateway (192.168.10.193), which is the ACL at work.
+- A rogue laptop on SW1 Fa0/1 put the port into `err-disable` with a violation count of 1.
 
 ## Fault write-ups
 
@@ -46,15 +52,15 @@ Full plan: [docs/ip-plan.md](docs/ip-plan.md). Validate it with `python tools/ip
 | F5 | L4 policy | ACL blocks too much | *to do* | *to do* |
 | F6 | L7 | Bad DNS record | *to do* | *to do* |
 
-Each write-up covers the symptom, the commands run (with real output), the root cause, the fix, verification and prevention. The catalog is in [faults/README.md](faults/README.md).
+Each write-up covers the symptom, the commands run (with real output), the root cause, the fix, verification and prevention. The template is in [faults/TEMPLATE.md](faults/TEMPLATE.md).
 
 ## Repository layout
 
 ```
-docs/          plan, requirements, IP plan, design decisions
-configs/       device configs (real exports) + server/endpoint GUI settings
+docs/          requirements, IP plan, design decisions
+configs/       running-configs exported from the devices + server/endpoint GUI settings
 tests/         verification matrix T01–T22
-faults/        fault catalog, template, six write-ups
+faults/        write-up template and the six fault write-ups
 packet-tracer/ baseline .pkt + six challenge .pkt files
 diagrams/      topology.drawio + topology.png
 screenshots/   evidence referenced by tests and write-ups
