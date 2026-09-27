@@ -43,16 +43,18 @@ Highlights:
 
 ## Fault write-ups
 
-| # | Layer | Fault | Write-up | Challenge file |
-|---|---|---|---|---|
-| F1 | L2 access | Wrong VLAN on a port | *to do* | *to do* |
-| F2 | L2 trunk | VLAN missing from trunk | *to do* | *to do* |
-| F3 | L3 boundary | No DHCP relay | *to do* | *to do* |
-| F4 | L3 host | Wrong default gateway | *to do* | *to do* |
-| F5 | L4 policy | ACL blocks too much | *to do* | *to do* |
-| F6 | L7 | Bad DNS record | *to do* | *to do* |
+| # | Layer | Fault | Write-up |
+|---|---|---|---|
+| F01 | L3 relay | Sales VLAN lost DHCP when the relay was removed | [F01](faults/F01-no-dhcp-relay.md) |
+| F02 | L2 trunk | HR worked on one switch only after a VLAN was pruned from the trunk | [F02](faults/F02-vlan-missing-from-trunk.md) |
+| F03 | L2 access | Guest Wi-Fi landed in the IT VLAN and bypassed the guest ACL | [F03](faults/F03-wrong-vlan-on-ap-port.md) |
+| F04 | L3 host | HR's DHCP pool handed out the wrong default gateway | [F04](faults/F04-wrong-default-gateway.md) |
+| F05 | L4 policy | Removing the ACL's final permit left guests with DHCP and DNS only | [F05](faults/F05-acl-blocks-too-much.md) |
+| F06 | L7 | One wrong digit in a DNS A record took "the website" down | [F06](faults/F06-bad-dns-record.md) |
 
-Each write-up covers the symptom, the commands run (with real output), the root cause, the fix, verification and prevention. The template is in [faults/TEMPLATE.md](faults/TEMPLATE.md).
+Each fault was injected into a copy of the baseline, diagnosed, fixed and then reverted, with the regression smoke set re-run after every fix. Every write-up carries the symptom, the commands run with their real output (dead ends included), the root cause, the fix, verification and a prevention control. The blank template is [faults/TEMPLATE.md](faults/TEMPLATE.md).
+
+The faults climb the stack on purpose — access port, trunk, DHCP relay, host options, ACL, DNS — so the set shows a method rather than six lucky guesses. Two of them (F03 and F04) break no connectivity at all, which is what makes them worth reading.
 
 ## Repository layout
 
@@ -71,11 +73,15 @@ tools/         ipplan.py
 
 1. Install Cisco Packet Tracer (the version above or newer) from Cisco Networking Academy.
 2. Open `packet-tracer/office-baseline-v1.0.pkt` to see the working network.
-3. Open any `packet-tracer/faults/F0N-*.pkt` to try a fault yourself, then compare with its write-up.
+3. Read the six write-ups in `faults/` to follow how each fault was found and fixed. Every fault can be reproduced in the baseline with the inject command listed at the top of its write-up.
 
 ## What I learned
 
-<!-- After P6: 3–5 bullets, for example what scope told you about the layer of a fault. -->
+- **Scope names the layer.** One VLAN down on every switch is a router or server problem; one VLAN down on one switch is a trunk problem; one host down is that host or its port. Deciding scope before typing a command shortened every diagnosis here.
+- **Check both ends of a trunk.** In F02 the switch that reported the fault looked perfectly configured; the pruned VLAN was only visible from the other end of the same cable.
+- **A working DHCP lease proves nothing about the options inside it** (F04), and a successful name lookup proves nothing about the address it returned (F06).
+- **Every ACL ends with an invisible deny** (F05), so removing a permit is enough to cause an outage that looks like a connectivity failure.
+- **Some faults break no connectivity at all.** F03 left the guest network fully working while quietly putting guests inside the IT subnet; only a test that asserts something must *fail* caught it.
 
 ## Roadmap (after v1.0)
 
